@@ -13,7 +13,7 @@ def call(String chosenStages) {
 		stage(it){
 			try{
 				"${it}"()
-				}catch(Exeption e){
+				}catch(Exception e){
 					error "Stage ${it} tiene problemas: ${e}"
 				}
 		}
