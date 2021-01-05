@@ -32,6 +32,7 @@ def sonar(){
 
 def runJar(){
 	bat 'start gradlew bootRun &'
+	sleep 20
 }
 
 def rest(){
