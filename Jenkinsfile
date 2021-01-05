@@ -1,3 +1,0 @@
-library ('pipeline')
-
-ejecucion.call()
