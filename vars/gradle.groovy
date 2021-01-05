@@ -1,50 +1,47 @@
-def call(String selectStage = '') {
+import pipeline.*
 
-	switch (selectStage) {
+def call(String chosenStages) {
 
-		case 'build':
-		stage('build') {
-			env.stage = "${env.STAGE_NAME}";
-			bat './gradlew clean build';
+	figlet 'gradle'
+
+	def pipelineStages = ['buildAndTest','sonar','runJar','rest','nexus']
+
+	def utils =  new test.UtilMethods()
+	def stages = utils.getValidatedStages(chosenStages, pipelineStages)
+
+	stages.each{
+		stage(it){
+			try{
+				"${it}"
+				}catch(Exeption e){
+					error "Stage ${it} tiene problemas: ${e}"
+				}
 		}
-		break;
+	}
+	
+}
 
-		case 'sonar':
-		stage('sonar') {
-			env.stage = "${env.STAGE_NAME}";
-			def scannerHome = tool 'sonar-scanner';
-		        withSonarQubeEnv('sonar') {
-		            bat "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=ejemplo-gradle -Dsonar.java.binaries=build" 
-		         } 
-		}
-		break;
+def buildAndTest(){
+	bat './gradlew clean build'
+}
 
-		case 'run':
-		stage('run') {
-			env.stage = "${env.STAGE_NAME}";
-			bat 'start gradlew bootRun &';
-			sleep 20
-		}
-		break;
+def sonar(){
+	def scannerHome = tool 'sonar-scanner'
+	bat "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=ejemplo-gradle -Dsonar.java.binaries=build" 
+}
 
-		case 'test':
-		stage('test') {
-			env.stage = "${env.STAGE_NAME}";
-			bat 'curl http://localhost:8083/rest/mscovid/estadoMundial'
-		}
-		break;
+def runJar(){
+	bat 'start gradlew bootRun &'
+}
 
-		case 'nexus':
-			stage('nexus'){
-							nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: 'test-nexus', 
+def rest(){
+	bat 'curl http://localhost:8083/rest/mscovid/estadoMundial'
+}
+
+def nexus(){
+	nexusPublisher nexusInstanceId: 'nexus', nexusRepositoryId: 'test-nexus', 
 							packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: '', 
 							filePath: 'build/libs/DevOpsUsach2020-0.0.1.jar']], 
 							mavenCoordinate: [artifactId: 'DevOpsUsach2020', groupId: 'com.devopsusach2020', packaging: 'jar', version: '0.0.1']]]
-
-						}
-			
-		break;
-
-	}
 }
 return this;
